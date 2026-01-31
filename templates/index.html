@@ -66,43 +66,45 @@
             </label>
         </div>
         
-        <div class="flex items-center gap-2" id="controls" style="opacity: 0.5; pointer-events: none;">
-            <button id="prev-btn" class="p-2 hover:bg-gray-100 rounded-full text-gray-600" title="Previous Page"><i class="fas fa-chevron-left"></i></button>
-            <span id="page-info" class="text-sm text-gray-500 w-24 text-center truncate">-- / --</span>
-            <button id="next-btn" class="p-2 hover:bg-gray-100 rounded-full text-gray-600" title="Next Page"><i class="fas fa-chevron-right"></i></button>
-            
-            <div class="h-6 w-px bg-gray-300 mx-2"></div>
-            
-            <button onclick="addBookmark()" class="p-2 hover:bg-pink-50 text-pink-500 rounded-full" title="Add Bookmark">
-                <i class="fas fa-bookmark"></i>
-            </button>
-            <button onclick="toggleBookmarkPanel()" class="p-2 hover:bg-gray-100 text-gray-600 rounded-full relative" title="Bookmark List">
-                <i class="fas fa-list-ul"></i>
-                <span id="bookmark-badge" class="absolute top-0 right-0 bg-pink-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center hidden">0</span>
-            </button>
+        <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2" id="controls" style="opacity: 0.5; pointer-events: none;">
+                <button id="prev-btn" class="p-2 hover:bg-gray-100 rounded-full text-gray-600" title="Previous Page"><i class="fas fa-chevron-left"></i></button>
+                <span id="page-info" class="text-sm text-gray-500 w-24 text-center truncate">-- / --</span>
+                <button id="next-btn" class="p-2 hover:bg-gray-100 rounded-full text-gray-600" title="Next Page"><i class="fas fa-chevron-right"></i></button>
+                
+                <div class="h-6 w-px bg-gray-300 mx-2"></div>
+                
+                <button onclick="addBookmark()" class="p-2 hover:bg-pink-50 text-pink-500 rounded-full" title="Add Bookmark">
+                    <i class="fas fa-bookmark"></i>
+                </button>
+                <button onclick="toggleBookmarkPanel()" class="p-2 hover:bg-gray-100 text-gray-600 rounded-full relative" title="Bookmark List">
+                    <i class="fas fa-list-ul"></i>
+                    <span id="bookmark-badge" class="absolute top-0 right-0 bg-pink-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center hidden">0</span>
+                </button>
 
-            <div class="h-6 w-px bg-gray-300 mx-2"></div>
+                <div class="h-6 w-px bg-gray-300 mx-2"></div>
 
-            <!-- 左側字體控制 -->
-            <div class="flex items-center gap-1 border border-gray-200 rounded px-1" title="Book Font Size">
-                <i class="fas fa-book-open text-gray-400 text-xs"></i>
-                <button onclick="changeBookFontSize(10)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-sm">A+</button>
-                <button onclick="changeBookFontSize(-10)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-xs">A-</button>
+                <!-- 左側字體控制 -->
+                <div class="flex items-center gap-1 border border-gray-200 rounded px-1" title="Book Font Size">
+                    <i class="fas fa-book-open text-gray-400 text-xs"></i>
+                    <button onclick="changeBookFontSize(10)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-sm">A+</button>
+                    <button onclick="changeBookFontSize(-10)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-xs">A-</button>
+                </div>
+
+                <!-- 右側字體控制 -->
+                <div class="flex items-center gap-1 border border-gray-200 rounded px-1 ml-2" title="Helper Font Size">
+                    <i class="fas fa-language text-gray-400 text-xs"></i>
+                    <button onclick="changeHelperFontSize(0.1)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-sm">A+</button>
+                    <button onclick="changeHelperFontSize(-0.1)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-xs">A-</button>
+                </div>
             </div>
 
-            <!-- 右側字體控制 -->
-            <div class="flex items-center gap-1 border border-gray-200 rounded px-1 ml-2" title="Helper Font Size">
-                <i class="fas fa-language text-gray-400 text-xs"></i>
-                <button onclick="changeHelperFontSize(0.1)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-sm">A+</button>
-                <button onclick="changeHelperFontSize(-0.1)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-xs">A-</button>
-            </div>
+            <div class="h-6 w-px bg-gray-300 mx-2 hidden sm:block"></div>
 
-            <div class="h-6 w-px bg-gray-300 mx-2"></div>
-
-            <!-- User Info & Logout -->
+            <!-- User Info & Logout (Moved outside #controls) -->
             <div class="flex items-center gap-2">
                 <span class="text-sm font-bold text-gray-700 hidden lg:block">{{ user.username }}</span>
-                <a href="{{ url_for('logout') }}" class="text-gray-400 hover:text-red-500 p-2" title="Logout">
+                <a href="{{ url_for('logout') }}" class="text-gray-400 hover:text-red-500 p-2 z-50 relative" title="Logout">
                     <i class="fas fa-sign-out-alt"></i>
                 </a>
             </div>

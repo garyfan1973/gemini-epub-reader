@@ -76,12 +76,13 @@ if GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
         # Model selection logic (simplified from original)
-        active_model = genai.GenerativeModel('gemini-pro') # Default fallback
+        # Fallback to gemini-1.5-flash which is free-tier friendly and current
+        active_model = genai.GenerativeModel('gemini-1.5-flash') 
         if GEMINI_MODEL:
             active_model = genai.GenerativeModel(GEMINI_MODEL)
             model_name = GEMINI_MODEL
         else:
-             model_name = "gemini-pro"
+             model_name = "gemini-1.5-flash (default)"
         print(f"Gemini configured: {model_name}")
     except Exception as e:
         print(f"Error configuring Gemini: {e}")
