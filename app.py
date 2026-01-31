@@ -56,6 +56,10 @@ class User(UserMixin, db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# --- Database Creation (Ensure tables exist) ---
+with app.app_context():
+    db.create_all()
+
 # --- Gemini Setup ---
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 GEMINI_MODEL = os.environ.get('GEMINI_MODEL')
@@ -85,23 +89,29 @@ def allowed_file(filename):
 def register():
     if current_user.is_authenticated: return redirect(url_for('index'))
     if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-        
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists')
-            return redirect(url_for('register'))
-        if User.query.filter_by(email=email).first():
-            flash('Email already registered')
-            return redirect(url_for('register'))
+        try:
+            username = request.form['username']
+            email = request.form['email']
+            password = request.form['password']
             
-        new_user = User(username=username, email=email)
-        new_user.set_password(password)
-        db.session.add(new_user)
-        db.session.commit()
-        login_user(new_user)
-        return redirect(url_for('index'))
+            if User.query.filter_by(username=username).first():
+                flash('Username already exists')
+                return redirect(url_for('register'))
+            if User.query.filter_by(email=email).first():
+                flash('Email already registered')
+                return redirect(url_for('register'))
+                
+            new_user = User(username=username, email=email)
+            new_user.set_password(password)
+            db.session.add(new_user)
+            db.session.commit()
+            login_user(new_user)
+            return redirect(url_for('index'))
+        except Exception as e:
+            print("Register Error:")
+            traceback.print_exc()
+            flash(f"Error: {str(e)}")
+            return render_template('register.html')
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
