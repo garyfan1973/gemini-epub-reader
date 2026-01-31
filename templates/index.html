@@ -147,16 +147,34 @@
         let helperFontSize = 1; // rem
         let currentBookKey = "";
 
-        // Initialize Split.js
-        Split(['#split-left', '#split-right'], {
-            sizes: [66, 34],
-            minSize: [300, 250],
-            gutterSize: 8,
-            cursor: 'col-resize',
-            onDragEnd: function() {
-                if(rendition) rendition.resize();
+        // Global Error Handler to catch startup issues
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            alert("System Error: " + msg + "\nLine: " + lineNo);
+            return false;
+        };
+
+        // Initialize Split.js with Safety Check
+        try {
+            if (typeof Split !== 'undefined') {
+                Split(['#split-left', '#split-right'], {
+                    sizes: [66, 34],
+                    minSize: [300, 250],
+                    gutterSize: 8,
+                    cursor: 'col-resize',
+                    onDragEnd: function() {
+                        if(rendition) rendition.resize();
+                    }
+                });
+            } else {
+                console.error("Split.js not loaded");
+                // Fallback layout if Split.js fails
+                document.getElementById('split-left').style.width = '66%';
+                document.getElementById('split-right').style.width = '34%';
             }
-        });
+        } catch(e) {
+            console.error("Split init failed:", e);
+            alert("Layout Init Failed: " + e.message);
+        }
 
         function log(msg) {
             console.log("[Anna]", msg);
