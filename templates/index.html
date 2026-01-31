@@ -96,6 +96,16 @@
                 <button onclick="changeHelperFontSize(0.1)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-sm">A+</button>
                 <button onclick="changeHelperFontSize(-0.1)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-xs">A-</button>
             </div>
+
+            <div class="h-6 w-px bg-gray-300 mx-2"></div>
+
+            <!-- User Info & Logout -->
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-gray-700 hidden lg:block">{{ user.username }}</span>
+                <a href="{{ url_for('logout') }}" class="text-gray-400 hover:text-red-500 p-2" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
         </div>
     </header>
 

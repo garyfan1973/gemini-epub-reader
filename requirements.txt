@@ -2,3 +2,7 @@ Flask==3.0.0
 google-generativeai>=0.7.0
 werkzeug
 gunicorn
+Flask-SQLAlchemy
+Flask-Login
+Flask-Mail
+email_validator
