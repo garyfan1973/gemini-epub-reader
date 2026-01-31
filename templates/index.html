@@ -29,7 +29,10 @@
     <!-- 頂部工具列 -->
     <header class="bg-white shadow-sm border-b border-gray-200 p-3 flex justify-between items-center z-20 h-16 shrink-0 relative">
         <div class="flex items-center gap-4">
-            <h1 class="text-xl font-bold text-pink-600 tracking-wide">Anna's Reader 🦊</h1>
+            <button onclick="goHome()" class="text-pink-600 hover:bg-pink-50 p-2 rounded-full transition" title="Back to Home">
+                <i class="fas fa-home text-xl"></i>
+            </button>
+            <h1 class="text-xl font-bold text-pink-600 tracking-wide hidden sm:block">Anna's Reader 🦊</h1>
             <label class="cursor-pointer bg-pink-50 hover:bg-pink-100 text-pink-600 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2">
                 <i class="fas fa-cloud-upload-alt"></i> Upload
                 <input type="file" id="file-input" accept=".epub" class="hidden">
@@ -303,9 +306,56 @@
             } catch (err) {} finally { showLoading(false); }
         }
 
+        // --- 鍵盤監聽 ---
+        document.addEventListener('keyup', (e) => {
+            if (!rendition) return;
+            if (e.key === "ArrowLeft") rendition.prev();
+            if (e.key === "ArrowRight") rendition.next();
+        });
+
+        // --- UI 控制 ---
         document.getElementById('prev-btn').onclick = () => rendition && rendition.prev();
         document.getElementById('next-btn').onclick = () => rendition && rendition.next();
-        function changeFontSize(delta) { if (!rendition) return; fontSize += delta; rendition.themes.fontSize(fontSize + "%"); }
+        
+        function changeFontSize(delta) {
+            fontSize += delta;
+            // 限制最小最大值
+            if (fontSize < 50) fontSize = 50;
+            if (fontSize > 300) fontSize = 300;
+
+            // 1. 調整 EPUB 字體
+            if (rendition) rendition.themes.fontSize(fontSize + "%");
+            
+            // 2. 調整翻譯區字體 (預設 1rem = 16px)
+            // 基礎大小設為 100% (1rem)，隨 fontSize 比例調整
+            const transContainer = document.getElementById('translation-container');
+            transContainer.style.fontSize = (fontSize / 100) + "rem";
+        }
+        
+        document.getElementById('font-select').addEventListener('change', (e) => {
+            if (!rendition) return;
+            rendition.themes.font(e.target.value);
+        });
+
+        function goHome() {
+            if (book) {
+                book.destroy();
+                book = null;
+                rendition = null;
+            }
+            document.getElementById('empty-state').style.display = 'flex';
+            document.getElementById('controls').style.opacity = '0.5';
+            document.getElementById('controls').style.pointerEvents = 'none';
+            document.getElementById('translation-container').innerHTML = `
+                <div class="text-center mt-20 text-gray-400 italic">
+                    <p>Select text to translate</p>
+                    <div id="debug-log" class="mt-8 text-xs text-gray-300 text-left font-mono whitespace-pre-wrap"></div>
+                </div>
+            `;
+            // 清除標題
+            document.title = "Anna's Reader for Gary 🦊";
+        }
+
         function showLoading(show) { const el = document.getElementById('loading-indicator'); if (show) el.classList.remove('hidden'); else el.classList.add('hidden'); }
     </script>
 </body>
