@@ -1,5 +1,7 @@
+# Ignore environment variables
+.env
 __pycache__/
 *.pyc
-.env
-venv/
-.DS_Store
+instance/
+users.db
+static/uploads/

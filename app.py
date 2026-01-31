@@ -7,7 +7,10 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
+from dotenv import load_dotenv
 import traceback
+
+load_dotenv() # Load environment variables from .env file
 
 app = Flask(__name__)
 
