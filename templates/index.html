@@ -3,29 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anna's Reader for Gary 🦊</title>
-    <!-- 引入 epub.js -->
+    <title>Anna's Reader for Gary (v2) 🦊</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
-    <!-- 引入 Tailwind CSS (讓介面變漂亮) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     
     <style>
         body { font-family: 'Roboto', 'Noto Serif TC', serif; background-color: #f3f4f6; }
         #viewer { height: 100%; width: 100%; overflow: hidden; }
-        .highlight-menu { 
-            position: absolute; z-index: 50; background: white; border: 1px solid #e5e7eb; 
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 0.5rem; padding: 0.5rem; 
-            display: none; 
-        }
-        /* 自定義捲軸 */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
+        /* 強制選取顏色 */
+        ::selection { background: #fbcfe8; color: #831843; }
         .loader {
             border: 3px solid #f3f3f3; border-top: 3px solid #db2777; border-radius: 50%;
             width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block;
@@ -39,7 +27,6 @@
     <header class="bg-white shadow-sm border-b border-gray-200 p-3 flex justify-between items-center z-10 h-16">
         <div class="flex items-center gap-4">
             <h1 class="text-xl font-bold text-pink-600 tracking-wide">Anna's Reader 🦊</h1>
-            <!-- 上傳按鈕 -->
             <label class="cursor-pointer bg-pink-50 hover:bg-pink-100 text-pink-600 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
                 Upload EPUB
@@ -47,7 +34,6 @@
             </label>
         </div>
         
-        <!-- 閱讀控制 -->
         <div class="flex items-center gap-2" id="controls" style="opacity: 0.5; pointer-events: none;">
             <button id="prev-btn" class="p-2 hover:bg-gray-100 rounded-full text-gray-600"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg></button>
             <span id="page-info" class="text-sm text-gray-500 w-20 text-center">-- / --</span>
@@ -55,9 +41,8 @@
             
             <div class="h-6 w-px bg-gray-300 mx-2"></div>
             
-            <!-- 字體控制 -->
-            <button onclick="changeFontSize(1)" class="p-2 hover:bg-gray-100 rounded text-gray-600 text-lg font-bold">A+</button>
-            <button onclick="changeFontSize(-1)" class="p-2 hover:bg-gray-100 rounded text-gray-600 text-sm font-bold">A-</button>
+            <button onclick="changeFontSize(10)" class="p-2 hover:bg-gray-100 rounded text-gray-600 text-lg font-bold">A+</button>
+            <button onclick="changeFontSize(-10)" class="p-2 hover:bg-gray-100 rounded text-gray-600 text-sm font-bold">A-</button>
             <select id="font-select" class="ml-2 border-gray-300 rounded text-sm text-gray-600 focus:ring-pink-500 focus:border-pink-500 p-1">
                 <option value="Helvetica, sans-serif">Sans-Serif</option>
                 <option value="Georgia, serif">Serif</option>
@@ -65,20 +50,16 @@
         </div>
     </header>
 
-    <!-- 主區域：左右分割 -->
     <div class="flex-1 flex overflow-hidden">
-        
-        <!-- 左側：閱讀器 -->
         <div class="flex-1 relative bg-white shadow-inner flex flex-col">
             <div id="viewer" class="flex-1"></div>
-            <!-- 空狀態提示 -->
             <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 text-pink-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                 <p class="text-lg">Upload an EPUB to start reading with Anna 💕</p>
+                <p class="text-sm mt-2 text-gray-300">(Try selecting text or right-clicking words!)</p>
             </div>
         </div>
 
-        <!-- 右側：Gemini 翻譯區 -->
         <div class="w-1/3 min-w-[300px] max-w-[500px] bg-white border-l border-gray-200 flex flex-col shadow-xl z-20">
             <div class="p-4 border-b border-gray-100 bg-pink-50 flex justify-between items-center">
                 <h2 class="font-bold text-gray-700 flex items-center gap-2">
@@ -89,12 +70,12 @@
                 </div>
             </div>
             
-            <!-- 翻譯內容容器 -->
             <div id="translation-container" class="flex-1 p-6 overflow-y-auto prose prose-sm prose-pink max-w-none text-gray-600">
                 <div class="text-center mt-20 text-gray-400 italic">
                     <p>Select text to translate</p>
                     <p class="text-xs mt-2">- or -</p>
                     <p>Right-click a word for definition</p>
+                    <div id="debug-log" class="mt-8 text-xs text-gray-300 text-left font-mono whitespace-pre-wrap"></div>
                 </div>
             </div>
         </div>
@@ -104,21 +85,23 @@
         let book, rendition;
         let fontSize = 100;
         
-        // --- 檔案上傳 ---
+        function log(msg) {
+            console.log("[Anna]", msg);
+            const debugEl = document.getElementById('debug-log');
+            if(debugEl) debugEl.innerText = msg + '\n' + debugEl.innerText.substring(0, 200);
+        }
+
         document.getElementById('file-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
             const formData = new FormData();
             formData.append('file', file);
-
-            // 顯示載入中
-            document.getElementById('empty-state').innerHTML = '<p class="text-pink-500 animate-pulse">Uploading & Parsing...</p>';
+            document.getElementById('empty-state').innerHTML = '<p class="text-pink-500 animate-pulse">Uploading...</p>';
 
             try {
                 const res = await fetch('/upload', { method: 'POST', body: formData });
                 const data = await res.json();
-                
                 if (data.url) {
                     loadBook(data.url);
                     document.getElementById('empty-state').style.display = 'none';
@@ -130,88 +113,91 @@
             }
         });
 
-        // --- EPUB 載入與渲染 ---
         function loadBook(url) {
             if (book) book.destroy();
+            log("Loading book: " + url);
             
             book = ePub(url);
             rendition = book.renderTo("viewer", {
-                width: "100%",
-                height: "100%",
-                flow: "paginated",
-                manager: "default"
+                width: "100%", height: "100%", flow: "paginated", manager: "default",
+                allowScriptedContent: true
             });
 
             rendition.display();
 
-            // 頁碼更新
-            rendition.on('relocated', (location) => {
-                // 簡單顯示，實際頁碼需要 locations.generate() 比較耗時
-                document.getElementById('page-info').innerText = `Page ...`; 
-            });
-
-            // --- 核心功能：選取翻譯 ---
-            rendition.on('selected', (cfiRange, contents) => {
-                book.getRange(cfiRange).then(range => {
-                    const text = range.toString();
-                    if (text.trim().length > 0) {
-                        // 清除選取，避免干擾
-                        // contents.window.getSelection().removeAllRanges(); 
-                        // 呼叫翻譯
-                        translateText(text);
-                    }
-                });
-            });
-
-            // --- 核心功能：右鍵查單字 ---
-            // 必須透過 hook 在 iframe 內容載入後注入事件監聽
+            // --- 註冊 Hooks (關鍵) ---
             rendition.hooks.content.register((contents) => {
+                log("Content loaded. Injecting listeners...");
                 const doc = contents.document;
-                const body = doc.body;
+                
+                // 1. 注入 CSS 讓選取可見
+                const style = doc.createElement('style');
+                style.innerHTML = `::selection { background: #fbcfe8; color: #831843; }`;
+                doc.head.appendChild(style);
 
-                // 注入自定義 CSS 讓選取更清楚
-                const s = doc.createElement("style");
-                s.innerHTML = "::selection { background: #fce7f3; color: inherit; }";
-                doc.head.appendChild(s);
-
-                // 監聽右鍵點擊
-                body.addEventListener('contextmenu', (e) => {
-                    e.preventDefault(); // 阻止瀏覽器預設選單
-                    
-                    // 取得點擊位置的單字 (簡單實作)
+                // 2. 監聽 MouseUp (處理選取翻譯)
+                doc.addEventListener('mouseup', (e) => {
                     const selection = contents.window.getSelection();
-                    // 如果沒有選取範圍，嘗試選取點擊處的單字
-                    if (selection.isCollapsed) {
-                        const range = doc.caretRangeFromPoint(e.clientX, e.clientY);
-                        if (range) {
-                            range.expand('word');
-                            const word = range.toString().trim();
-                            
-                            // 取得整句上下文 (簡單取前後 50 字)
-                            const context = range.startContainer.textContent.substring(
-                                Math.max(0, range.startOffset - 50),
-                                Math.min(range.startContainer.textContent.length, range.endOffset + 50)
-                            );
-
-                            if (word) defineWord(word, context);
-                        }
-                    } else {
-                        // 如果已經選取了單字，直接查
-                        const word = selection.toString().trim();
-                        if (word && word.split(' ').length < 4) { // 限制長度避免誤查長句
-                            defineWord(word, "");
-                        }
+                    const text = selection.toString().trim();
+                    
+                    if (text.length > 0) {
+                        log("Selected text: " + text.substring(0, 20) + "...");
+                        // 稍微延遲避免誤觸
+                        setTimeout(() => translateText(text), 200);
                     }
                 });
+
+                // 3. 監聽右鍵 (處理查單字)
+                doc.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    log("Right click detected");
+
+                    const selection = contents.window.getSelection();
+                    let word = selection.toString().trim();
+                    let context = "";
+
+                    // 如果沒選字，嘗試抓游標下的字
+                    if (!word) {
+                        // Firefox/Chrome 兼容寫法
+                        let range;
+                        if (doc.caretRangeFromPoint) {
+                            range = doc.caretRangeFromPoint(e.clientX, e.clientY);
+                        } else if (doc.caretPositionFromPoint) {
+                            const pos = doc.caretPositionFromPoint(e.clientX, e.clientY);
+                            range = doc.createRange();
+                            range.setStart(pos.offsetNode, pos.offset);
+                            range.collapse(true);
+                        }
+
+                        if (range) {
+                            // 擴展選取到整個單字
+                            // 這裡用簡單的正則或 epubjs 的 expand 
+                            // 簡單 fallback: 讓使用者先選再按右鍵最穩
+                            log("No direct selection, asking user to select first.");
+                            // 嘗試選取整字 (Beta)
+                            // range.expand('word'); // 並非所有瀏覽器支援
+                        }
+                    }
+
+                    if (word) {
+                        log("Defining word: " + word);
+                        defineWord(word, context);
+                    } else {
+                        // 提示使用者
+                        const container = document.getElementById('translation-container');
+                        container.innerHTML = `<div class="p-4 text-orange-500 font-bold">Please select a word first, then right-click! 💕</div>`;
+                    }
+                });
+            });
+
+            rendition.on('relocated', (location) => {
+               // Page update logic
             });
         }
 
-        // --- API 呼叫：翻譯 ---
         async function translateText(text) {
             showLoading(true);
             const container = document.getElementById('translation-container');
-            
-            // 先顯示原文
             container.innerHTML = `
                 <div class="mb-4 pb-4 border-b border-gray-100">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Original</h3>
@@ -219,73 +205,57 @@
                 </div>
                 <div>
                     <h3 class="text-xs font-bold text-pink-500 uppercase tracking-wider mb-2">Anna's Translation</h3>
-                    <div id="result-content" class="text-gray-700 leading-relaxed min-h-[100px] animate-pulse bg-gray-50 rounded"></div>
+                    <div id="result-content" class="text-gray-700 leading-relaxed min-h-[100px] animate-pulse bg-gray-50 rounded">Thinking...</div>
                 </div>
             `;
 
             try {
                 const res = await fetch('/api/translate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text })
                 });
                 const data = await res.json();
-                
                 const resultDiv = document.getElementById('result-content');
                 resultDiv.classList.remove('animate-pulse', 'bg-gray-50', 'min-h-[100px]');
                 resultDiv.innerText = data.translation || "Translation failed.";
             } catch (err) {
-                console.error(err);
-                document.getElementById('result-content').innerText = "Error connecting to Anna's brain 🧠";
+                log("Error: " + err.message);
+                document.getElementById('result-content').innerText = "Error: " + err.message;
             } finally {
                 showLoading(false);
             }
         }
 
-        // --- API 呼叫：查單字 ---
         async function defineWord(word, context) {
             showLoading(true);
             const container = document.getElementById('translation-container');
-
             container.innerHTML = `
-                <div class="mb-4">
-                    <h3 class="text-2xl font-serif font-bold text-gray-900">${word}</h3>
-                    ${context ? `<p class="text-xs text-gray-400 mt-1 truncate">"...${context}..."</p>` : ''}
-                </div>
-                <div>
-                    <div id="def-content" class="space-y-4 animate-pulse">
-                        <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-                        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-                        <div class="h-20 bg-gray-100 rounded mt-4"></div>
-                    </div>
-                </div>
+                <div class="mb-4"><h3 class="text-2xl font-serif font-bold text-gray-900">${word}</h3></div>
+                <div id="def-content" class="space-y-4 animate-pulse">Thinking...</div>
             `;
 
             try {
                 const res = await fetch('/api/define', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ word, context })
                 });
                 const data = await res.json();
-                
                 const defDiv = document.getElementById('def-content');
                 defDiv.classList.remove('animate-pulse');
                 defDiv.innerHTML = data.definition || "Definition not found.";
             } catch (err) {
-                console.error(err);
+                log("Error: " + err.message);
             } finally {
                 showLoading(false);
             }
         }
 
-        // --- UI 控制 ---
         document.getElementById('prev-btn').onclick = () => rendition && rendition.prev();
         document.getElementById('next-btn').onclick = () => rendition && rendition.next();
         
         function changeFontSize(delta) {
             if (!rendition) return;
-            fontSize += delta * 10;
+            fontSize += delta;
             rendition.themes.fontSize(fontSize + "%");
         }
         
@@ -296,10 +266,8 @@
 
         function showLoading(show) {
             const el = document.getElementById('loading-indicator');
-            if (show) el.classList.remove('hidden');
-            else el.classList.add('hidden');
+            if (show) el.classList.remove('hidden'); else el.classList.add('hidden');
         }
-
     </script>
 </body>
 </html>
