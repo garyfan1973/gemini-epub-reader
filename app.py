@@ -75,15 +75,55 @@ model_name = "Unknown"
 if GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        # Model selection logic (simplified from original)
-        # Fallback to gemini-1.5-flash which is free-tier friendly and current
-        active_model = genai.GenerativeModel('gemini-1.5-flash') 
+        
+        # 1. 嘗試列出所有可用模型，找出目前環境支援的清單
+        available_models = []
+        try:
+            for m in genai.list_models():
+                if 'generateContent' in m.supported_generation_methods:
+                    available_models.append(m.name)
+            print(f"Available models: {available_models}")
+        except Exception as e:
+            print(f"Error listing models: {e}")
+
+        target_model = None
+
+        # 2. 如果環境變數有指定，優先使用環境變數
         if GEMINI_MODEL:
-            active_model = genai.GenerativeModel(GEMINI_MODEL)
-            model_name = GEMINI_MODEL
-        else:
-             model_name = "gemini-1.5-flash (default)"
-        print(f"Gemini configured: {model_name}")
+            target_model = GEMINI_MODEL
+        
+        # 3. 如果沒指定，則從可用清單中智慧挑選 (優先選 pro, 其次 flash, 最後隨便選)
+        elif available_models:
+            # 找 1.5 Pro
+            pros = [m for m in available_models if 'pro' in m.lower() and '1.5' in m]
+            if pros: 
+                target_model = pros[0]
+            else:
+                # 找 1.5 Flash
+                flashs = [m for m in available_models if 'flash' in m.lower() and '1.5' in m]
+                if flashs: 
+                    target_model = flashs[0]
+                else:
+                    # 找舊版 Pro (例如 gemini-pro)
+                    old_pros = [m for m in available_models if 'pro' in m.lower()]
+                    if old_pros:
+                        target_model = old_pros[0]
+                    else:
+                        # 真的沒招了，選第一個
+                        target_model = available_models[0]
+            
+            # 清理模型名稱 (有些會帶 models/ 前綴)
+            if target_model.startswith('models/'):
+                target_model = target_model.replace('models/', '')
+
+        # 4. 如果連清單都抓不到，最後用目前最穩定的預設值
+        if not target_model: 
+            target_model = 'gemini-1.5-flash'
+
+        print(f"Selected Model: {target_model}")
+        model_name = target_model
+        active_model = genai.GenerativeModel(target_model)
+        
     except Exception as e:
         print(f"Error configuring Gemini: {e}")
 
