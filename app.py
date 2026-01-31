@@ -12,7 +12,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
-GEMINI_MODEL = os.environ.get('GEMINI_MODEL') # 如果有設定就優先用
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL')
 
 active_model = None
 model_name = "Unknown"
@@ -21,7 +21,6 @@ if GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
         
-        # 自動尋找可用模型
         available_models = []
         try:
             for m in genai.list_models():
@@ -31,32 +30,21 @@ if GEMINI_API_KEY:
         except Exception as e:
             print(f"Error listing models: {e}")
 
-        # 挑選策略
         target_model = None
-        
-        # 1. 如果環境變數有指定，最優先
         if GEMINI_MODEL:
             target_model = GEMINI_MODEL
-        
-        # 2. 否則嘗試尋找最強的 Pro 模型
         elif available_models:
-            # 優先找含有 'pro' 的 (1.5 pro, 1.0 pro)
             pros = [m for m in available_models if 'pro' in m.lower() and '1.5' in m]
             if pros: target_model = pros[0]
             else:
-                # 其次找含有 'flash' 的
                 flashs = [m for m in available_models if 'flash' in m.lower()]
                 if flashs: target_model = flashs[0]
-                else:
-                    # 最後隨便挑一個能用的
-                    target_model = available_models[0]
+                else: target_model = available_models[0]
             
-            # 清理 model name (有些回傳 models/gemini-pro，SDK 有時只要 gemini-pro)
             if target_model.startswith('models/'):
                 target_model = target_model.replace('models/', '')
 
-        if not target_model:
-            target_model = 'gemini-pro' # 最後的最後備案
+        if not target_model: target_model = 'gemini-pro'
 
         print(f"Selected Model: {target_model}")
         model_name = target_model
@@ -90,8 +78,7 @@ def upload_file():
 
 @app.route('/api/translate', methods=['POST'])
 def translate_text():
-    if not active_model:
-        return jsonify({'error': 'Server Error: Model not initialized.'}), 500
+    if not active_model: return jsonify({'error': 'Server Error: Model not initialized.'}), 500
     
     data = request.json
     text = data.get('text', '')
@@ -101,12 +88,8 @@ def translate_text():
         print(f"Translating with {model_name}...")
         prompt = f"Translate the following text to Traditional Chinese (Taiwan). Only output the translation.\n\n{text}"
         response = active_model.generate_content(prompt)
-        
-        if response.text:
-            return jsonify({'translation': response.text})
-        else:
-            return jsonify({'error': 'Empty response'}), 500
-
+        if response.text: return jsonify({'translation': response.text})
+        else: return jsonify({'error': 'Empty response'}), 500
     except Exception as e:
         return jsonify({'error': f"API Error ({model_name}): {str(e)}"}), 500
 
@@ -119,7 +102,25 @@ def define_word():
     context = data.get('context', '')
     
     try:
-        prompt = f"""Explain "{word}" in Traditional Chinese. Context: "{context}". Format as HTML."""
+        # Professional Dictionary Prompt 🎓
+        prompt = f"""
+        Act as a professional English-Chinese Dictionary (like Oxford or Longman).
+        Analyze the word "{word}" based on this context: "{context}".
+        
+        Provide the output in clean HTML format (only inside body tags, no markdown blocks).
+        
+        Style Guide:
+        - Use <h4 style="margin: 10px 0 5px; color: #db2777;"> for headers.
+        - Use <b> for emphasis.
+        - Use <ul style="padding-left: 20px; color: #4b5563;"> for lists.
+        
+        Structure:
+        1. Word Header: Word + IPA + Part of Speech.
+        2. Meaning in Context: Specific meaning in this sentence (Traditional Chinese).
+        3. General Definition: English definition + Chinese meaning.
+        4. Examples: 2-3 bilingual sentences.
+        5. Synonyms/Antonyms: If relevant.
+        """
         response = active_model.generate_content(prompt)
         return jsonify({'definition': response.text})
     except Exception as e:
