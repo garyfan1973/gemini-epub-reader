@@ -343,17 +343,29 @@
                 book = null;
                 rendition = null;
             }
-            document.getElementById('empty-state').style.display = 'flex';
+            const emptyState = document.getElementById('empty-state');
+            emptyState.style.display = 'flex';
+            // 重置回歡迎畫面 (關鍵修正！)
+            emptyState.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 text-pink-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                <p class="text-lg">Upload an EPUB to start reading with Anna 💕</p>
+                <p class="text-sm mt-2 text-gray-300">(Try selecting text or right-clicking words!)</p>
+            `;
+            
             document.getElementById('controls').style.opacity = '0.5';
             document.getElementById('controls').style.pointerEvents = 'none';
+            
+            // 清空翻譯區
             document.getElementById('translation-container').innerHTML = `
                 <div class="text-center mt-20 text-gray-400 italic">
                     <p>Select text to translate</p>
                     <div id="debug-log" class="mt-8 text-xs text-gray-300 text-left font-mono whitespace-pre-wrap"></div>
                 </div>
             `;
-            // 清除標題
             document.title = "Anna's Reader for Gary 🦊";
+            
+            // 清空檔案輸入框，這樣選同一個檔案也能觸發 change 事件
+            document.getElementById('file-input').value = '';
         }
 
         function showLoading(show) { const el = document.getElementById('loading-indicator'); if (show) el.classList.remove('hidden'); else el.classList.add('hidden'); }
