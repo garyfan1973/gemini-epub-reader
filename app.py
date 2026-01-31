@@ -111,6 +111,7 @@ def define_word():
         <div class="dict-card">
             <div class="dict-header">
                 <span class="dict-word">{word}</span>
+                <span class="dict-cn">Traditional Chinese Translation</span>
                 <span class="dict-ipa">[IPA Pronunciation]</span>
                 <span class="dict-pos">part of speech</span>
             </div>
