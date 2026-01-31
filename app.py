@@ -11,10 +11,12 @@ ALLOWED_EXTENSIONS = {'epub'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# 設定 Gemini API
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
-# 預設使用 gemini-2.0-flash-exp (夠新了吧！😤)
-# 你可以在 Zeabur 環境變數設定 GEMINI_MODEL 來更換
-GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.0-flash-exp')
+
+# 改用 gemini-1.5-pro (目前的穩定版旗艦)
+# 這不是舊版，是目前的主力戰艦！
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-1.5-pro')
 
 model = None
 
@@ -69,10 +71,9 @@ def translate_text():
             return jsonify({'error': 'Empty response from Gemini'}), 500
 
     except Exception as e:
-        # 將真正的錯誤回傳給前端！
         error_msg = str(e)
         print(f"Gemini Error: {error_msg}")
-        return jsonify({'error': f"API Error: {error_msg}"}), 500
+        return jsonify({'error': f"API Error ({GEMINI_MODEL}): {error_msg}"}), 500
 
 @app.route('/api/define', methods=['POST'])
 def define_word():
@@ -87,7 +88,7 @@ def define_word():
         response = model.generate_content(prompt)
         return jsonify({'definition': response.text})
     except Exception as e:
-        return jsonify({'error': f"API Error: {str(e)}"}), 500
+        return jsonify({'error': f"API Error ({GEMINI_MODEL}): {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
