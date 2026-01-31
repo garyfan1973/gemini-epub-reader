@@ -102,27 +102,55 @@ def define_word():
     context = data.get('context', '')
     
     try:
-        # Professional Dictionary Prompt 🎓
+        # 強制使用 HTML 結構的 Prompt
         prompt = f"""
-        Act as a professional English-Chinese Dictionary (like Oxford or Longman).
-        Analyze the word "{word}" based on this context: "{context}".
+        Act as a professional linguistic expert. Analyze the word "{word}" in the context: "{context}".
         
-        Provide the output in clean HTML format (only inside body tags, no markdown blocks).
+        Output valid HTML code using this EXACT structure (do not use markdown blocks):
         
-        Style Guide:
-        - Use <h4 style="margin: 10px 0 5px; color: #db2777;"> for headers.
-        - Use <b> for emphasis.
-        - Use <ul style="padding-left: 20px; color: #4b5563;"> for lists.
-        
-        Structure:
-        1. Word Header: Word + IPA + Part of Speech.
-        2. Meaning in Context: Specific meaning in this sentence (Traditional Chinese).
-        3. General Definition: English definition + Chinese meaning.
-        4. Examples: 2-3 bilingual sentences.
-        5. Synonyms/Antonyms: If relevant.
+        <div class="dict-card">
+            <div class="dict-header">
+                <span class="dict-word">{word}</span>
+                <span class="dict-ipa">[IPA Pronunciation]</span>
+                <span class="dict-pos">part of speech</span>
+            </div>
+            
+            <div class="dict-section context-meaning">
+                <h4>🎯 上下文精準釋義</h4>
+                <p>Explain the precise meaning of "{word}" in this specific sentence. Translate the explanation to Traditional Chinese.</p>
+            </div>
+
+            <div class="dict-section">
+                <h4>📚 詳細定義</h4>
+                <ul>
+                    <li><strong>English:</strong> Standard definition.</li>
+                    <li><strong>Chinese:</strong> Traditional Chinese translation.</li>
+                </ul>
+            </div>
+
+            <div class="dict-section examples">
+                <h4>🗣️ 雙語例句</h4>
+                <ul>
+                    <li>
+                        <p class="en">Example sentence 1.</p>
+                        <p class="zh">Chinese translation.</p>
+                    </li>
+                    <li>
+                        <p class="en">Example sentence 2.</p>
+                        <p class="zh">Chinese translation.</p>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="dict-section footer">
+                <p>💡 <span class="dict-note">Synonyms: synonym1, synonym2</span></p>
+            </div>
+        </div>
         """
         response = active_model.generate_content(prompt)
-        return jsonify({'definition': response.text})
+        # 清理可能跑出來的 markdown code block
+        clean_text = response.text.replace('```html', '').replace('```', '')
+        return jsonify({'definition': clean_text})
     except Exception as e:
         return jsonify({'error': f"API Error ({model_name}): {str(e)}"}), 500
 
