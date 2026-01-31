@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anna's Reader for Gary (v5 - Smart Dictionary) 🦊</title>
+    <title>Anna's Reader for Gary (v6 - Split Resize) 🦊</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.5/split.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     
@@ -21,6 +22,16 @@
         
         #bookmark-panel { transition: transform 0.3s ease-in-out; }
         .bookmark-item:hover { background-color: #fce7f3; }
+
+        /* Split.js Gutter Style */
+        .gutter {
+            background-color: #e5e7eb;
+            background-repeat: no-repeat;
+            background-position: 50%;
+            cursor: col-resize;
+            transition: background-color 0.2s;
+        }
+        .gutter:hover { background-color: #db2777; }
 
         /* --- 字典卡片專屬樣式 --- */
         .dict-card { font-family: 'Roboto', sans-serif; line-height: 1.6; animation: fadeIn 0.3s ease-in; }
@@ -56,9 +67,9 @@
         </div>
         
         <div class="flex items-center gap-2" id="controls" style="opacity: 0.5; pointer-events: none;">
-            <button id="prev-btn" class="p-2 hover:bg-gray-100 rounded-full text-gray-600"><i class="fas fa-chevron-left"></i></button>
+            <button id="prev-btn" class="p-2 hover:bg-gray-100 rounded-full text-gray-600" title="Previous Page"><i class="fas fa-chevron-left"></i></button>
             <span id="page-info" class="text-sm text-gray-500 w-24 text-center truncate">-- / --</span>
-            <button id="next-btn" class="p-2 hover:bg-gray-100 rounded-full text-gray-600"><i class="fas fa-chevron-right"></i></button>
+            <button id="next-btn" class="p-2 hover:bg-gray-100 rounded-full text-gray-600" title="Next Page"><i class="fas fa-chevron-right"></i></button>
             
             <div class="h-6 w-px bg-gray-300 mx-2"></div>
             
@@ -72,8 +83,19 @@
 
             <div class="h-6 w-px bg-gray-300 mx-2"></div>
 
-            <button onclick="changeFontSize(10)" class="p-2 hover:bg-gray-100 rounded text-gray-600 text-lg font-bold">A+</button>
-            <button onclick="changeFontSize(-10)" class="p-2 hover:bg-gray-100 rounded text-gray-600 text-sm font-bold">A-</button>
+            <!-- 左側字體控制 -->
+            <div class="flex items-center gap-1 border border-gray-200 rounded px-1" title="Book Font Size">
+                <i class="fas fa-book-open text-gray-400 text-xs"></i>
+                <button onclick="changeBookFontSize(10)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-sm">A+</button>
+                <button onclick="changeBookFontSize(-10)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-xs">A-</button>
+            </div>
+
+            <!-- 右側字體控制 -->
+            <div class="flex items-center gap-1 border border-gray-200 rounded px-1 ml-2" title="Helper Font Size">
+                <i class="fas fa-language text-gray-400 text-xs"></i>
+                <button onclick="changeHelperFontSize(0.1)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-sm">A+</button>
+                <button onclick="changeHelperFontSize(-0.1)" class="p-1 hover:bg-gray-100 text-gray-600 font-bold text-xs">A-</button>
+            </div>
         </div>
     </header>
 
@@ -109,7 +131,7 @@
                 </div>
             </div>
             
-            <div id="translation-container" class="flex-1 p-6 overflow-y-auto prose prose-sm prose-pink max-w-none text-gray-600">
+            <div id="translation-container" class="flex-1 p-6 overflow-y-auto min-h-0 break-words prose prose-sm prose-pink max-w-none text-gray-600">
                 <div class="text-center mt-20 text-gray-400 italic">
                     <p>Select a sentence to Translate.</p>
                     <p class="mt-2">Select a word to Define.</p>
@@ -121,8 +143,20 @@
 
     <script>
         let book, rendition;
-        let fontSize = 100;
+        let bookFontSize = 100;
+        let helperFontSize = 1; // rem
         let currentBookKey = "";
+
+        // Initialize Split.js
+        Split(['#split-left', '#split-right'], {
+            sizes: [66, 34],
+            minSize: [300, 250],
+            gutterSize: 8,
+            cursor: 'col-resize',
+            onDragEnd: function() {
+                if(rendition) rendition.resize();
+            }
+        });
 
         function log(msg) {
             console.log("[Anna]", msg);
@@ -274,10 +308,19 @@
         document.getElementById('prev-btn').onclick = () => rendition && rendition.prev();
         document.getElementById('next-btn').onclick = () => rendition && rendition.next();
         
-        function changeFontSize(delta) {
-            fontSize += delta; if (fontSize < 50) fontSize = 50; if (fontSize > 300) fontSize = 300;
-            if (rendition) rendition.themes.fontSize(fontSize + "%");
-            document.getElementById('translation-container').style.fontSize = (fontSize / 100) + "rem";
+        function changeBookFontSize(delta) {
+            bookFontSize += delta; 
+            if (bookFontSize < 50) bookFontSize = 50; 
+            if (bookFontSize > 300) bookFontSize = 300;
+            if (rendition) rendition.themes.fontSize(bookFontSize + "%");
+        }
+
+        function changeHelperFontSize(delta) {
+            helperFontSize += delta;
+            // 限制範圍 0.5rem ~ 3rem
+            if (helperFontSize < 0.5) helperFontSize = 0.5;
+            if (helperFontSize > 3.0) helperFontSize = 3.0;
+            document.getElementById('translation-container').style.fontSize = helperFontSize + "rem";
         }
 
         function goHome() {
