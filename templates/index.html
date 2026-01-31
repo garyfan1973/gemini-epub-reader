@@ -217,7 +217,13 @@
                 const data = await res.json();
                 const resultDiv = document.getElementById('result-content');
                 resultDiv.classList.remove('animate-pulse', 'bg-gray-50', 'min-h-[100px]');
-                resultDiv.innerText = data.translation || "Translation failed.";
+                
+                if (data.error) {
+                    resultDiv.innerHTML = `<span class="text-red-500 font-bold">${data.error}</span>`;
+                    log("Server returned error: " + data.error);
+                } else {
+                    resultDiv.innerText = data.translation;
+                }
             } catch (err) {
                 log("Error: " + err.message);
                 document.getElementById('result-content').innerText = "Error: " + err.message;
@@ -242,7 +248,13 @@
                 const data = await res.json();
                 const defDiv = document.getElementById('def-content');
                 defDiv.classList.remove('animate-pulse');
-                defDiv.innerHTML = data.definition || "Definition not found.";
+                
+                if (data.error) {
+                    defDiv.innerHTML = `<span class="text-red-500 font-bold">${data.error}</span>`;
+                    log("Server returned error: " + data.error);
+                } else {
+                    defDiv.innerHTML = data.definition;
+                }
             } catch (err) {
                 log("Error: " + err.message);
             } finally {
