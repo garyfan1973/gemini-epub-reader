@@ -197,6 +197,9 @@
             if (book) book.destroy();
             log("Loading book: " + url);
             
+            // 確保 viewer 容器是空的，避免殘留
+            document.getElementById("viewer").innerHTML = "";
+
             book = ePub(url);
             rendition = book.renderTo("viewer", {
                 width: "100%", height: "100%", flow: "paginated", manager: "default",
