@@ -1,5 +1,5 @@
 import os
-import google.generativeai as genai
+from openai import OpenAI
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -66,66 +66,18 @@ def load_user(user_id):
 with app.app_context():
     db.create_all()
 
-# --- Gemini Setup ---
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
-GEMINI_MODEL = os.environ.get('GEMINI_MODEL')
-active_model = None
-model_name = "Unknown"
+# --- Antigravity (OpenAI-compatible) Setup ---
+# 使用 Antigravity 免費方案，不需要 API key
+ANTIGRAVITY_BASE_URL = os.environ.get('ANTIGRAVITY_BASE_URL', 'https://antigravity.dev/api/providers/openai/v1')
+ANTIGRAVITY_MODEL = os.environ.get('ANTIGRAVITY_MODEL', 'gemini-2.0-flash')
+model_name = ANTIGRAVITY_MODEL
 
-if GEMINI_API_KEY:
-    try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        
-        # 1. 嘗試列出所有可用模型，找出目前環境支援的清單
-        available_models = []
-        try:
-            for m in genai.list_models():
-                if 'generateContent' in m.supported_generation_methods:
-                    available_models.append(m.name)
-            print(f"Available models: {available_models}")
-        except Exception as e:
-            print(f"Error listing models: {e}")
-
-        target_model = None
-
-        # 2. 如果環境變數有指定，優先使用環境變數
-        if GEMINI_MODEL:
-            target_model = GEMINI_MODEL
-        
-        # 3. 如果沒指定，則從可用清單中智慧挑選 (優先選 pro, 其次 flash, 最後隨便選)
-        elif available_models:
-            # 找 1.5 Pro
-            pros = [m for m in available_models if 'pro' in m.lower() and '1.5' in m]
-            if pros: 
-                target_model = pros[0]
-            else:
-                # 找 1.5 Flash
-                flashs = [m for m in available_models if 'flash' in m.lower() and '1.5' in m]
-                if flashs: 
-                    target_model = flashs[0]
-                else:
-                    # 找舊版 Pro (例如 gemini-pro)
-                    old_pros = [m for m in available_models if 'pro' in m.lower()]
-                    if old_pros:
-                        target_model = old_pros[0]
-                    else:
-                        # 真的沒招了，選第一個
-                        target_model = available_models[0]
-            
-            # 清理模型名稱 (有些會帶 models/ 前綴)
-            if target_model.startswith('models/'):
-                target_model = target_model.replace('models/', '')
-
-        # 4. 如果連清單都抓不到，最後用目前最穩定的預設值
-        if not target_model: 
-            target_model = 'gemini-1.5-flash'
-
-        print(f"Selected Model: {target_model}")
-        model_name = target_model
-        active_model = genai.GenerativeModel(target_model)
-        
-    except Exception as e:
-        print(f"Error configuring Gemini: {e}")
+# 初始化 OpenAI client (指向 Antigravity)
+client = OpenAI(
+    base_url=ANTIGRAVITY_BASE_URL,
+    api_key="not-needed"  # Antigravity 免費方案不需要 key
+)
+print(f"Using Antigravity with model: {model_name}")
 
 # --- Helper Functions ---
 def allowed_file(filename):
@@ -237,16 +189,20 @@ def upload_file():
 @app.route('/api/translate', methods=['POST'])
 @login_required
 def translate_text():
-    if not active_model: return jsonify({'error': 'Server Error: Model not initialized.'}), 500
-    
     data = request.json
     text = data.get('text', '')
     if not text: return jsonify({'error': 'No text provided'}), 400
 
     try:
-        prompt = f"Translate the following text to Traditional Chinese (Taiwan). Only output the translation.\n\n{text}"
-        response = active_model.generate_content(prompt)
-        if response.text: return jsonify({'translation': response.text})
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": "You are a translator. Translate the user's text to Traditional Chinese (Taiwan). Only output the translation, nothing else."},
+                {"role": "user", "content": text}
+            ]
+        )
+        translation = response.choices[0].message.content
+        if translation: return jsonify({'translation': translation})
         else: return jsonify({'error': 'Empty response'}), 500
     except Exception as e:
         return jsonify({'error': f"API Error ({model_name}): {str(e)}"}), 500
@@ -254,8 +210,6 @@ def translate_text():
 @app.route('/api/define', methods=['POST'])
 @login_required
 def define_word():
-    if not active_model: return jsonify({'error': 'Model not initialized'}), 500
-    
     data = request.json
     word = data.get('word', '')
     context = data.get('context', '')
@@ -306,8 +260,15 @@ def define_word():
             </div>
         </div>
         """
-        response = active_model.generate_content(prompt)
-        clean_text = response.text.replace('```html', '').replace('```', '')
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": "You are a linguistic expert. Output only valid HTML code as instructed."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        result = response.choices[0].message.content
+        clean_text = result.replace('```html', '').replace('```', '')
         return jsonify({'definition': clean_text})
     except Exception as e:
         return jsonify({'error': f"API Error ({model_name}): {str(e)}"}), 500
