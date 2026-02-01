@@ -68,7 +68,7 @@ with app.app_context():
 
 # --- Groq API Setup (免費方案) ---
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
-GROQ_MODEL = os.environ.get('GROQ_MODEL', 'llama-3.1-70b-versatile')
+GROQ_MODEL = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
 model_name = GROQ_MODEL
 
 if not GROQ_API_KEY:
