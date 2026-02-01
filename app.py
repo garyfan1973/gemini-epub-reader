@@ -66,18 +66,20 @@ def load_user(user_id):
 with app.app_context():
     db.create_all()
 
-# --- Antigravity (OpenAI-compatible) Setup ---
-# 使用 Antigravity 免費方案，不需要 API key
-ANTIGRAVITY_BASE_URL = os.environ.get('ANTIGRAVITY_BASE_URL', 'https://antigravity.dev/api/providers/openai/v1')
-ANTIGRAVITY_MODEL = os.environ.get('ANTIGRAVITY_MODEL', 'gemini-2.0-flash')
-model_name = ANTIGRAVITY_MODEL
+# --- Groq API Setup (免費方案) ---
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
+GROQ_MODEL = os.environ.get('GROQ_MODEL', 'llama-3.1-70b-versatile')
+model_name = GROQ_MODEL
 
-# 初始化 OpenAI client (指向 Antigravity)
-client = OpenAI(
-    base_url=ANTIGRAVITY_BASE_URL,
-    api_key="not-needed"  # Antigravity 免費方案不需要 key
-)
-print(f"Using Antigravity with model: {model_name}")
+if not GROQ_API_KEY:
+    print("⚠️  WARNING: GROQ_API_KEY not set. Translation/Dictionary features will not work.")
+    client = None
+else:
+    client = OpenAI(
+        base_url="https://api.groq.com/openai/v1",
+        api_key=GROQ_API_KEY
+    )
+    print(f"Using Groq with model: {model_name}")
 
 # --- Helper Functions ---
 def allowed_file(filename):
@@ -189,6 +191,8 @@ def upload_file():
 @app.route('/api/translate', methods=['POST'])
 @login_required
 def translate_text():
+    if not client: return jsonify({'error': 'Server Error: GROQ_API_KEY not configured.'}), 500
+    
     data = request.json
     text = data.get('text', '')
     if not text: return jsonify({'error': 'No text provided'}), 400
@@ -210,6 +214,8 @@ def translate_text():
 @app.route('/api/define', methods=['POST'])
 @login_required
 def define_word():
+    if not client: return jsonify({'error': 'Server Error: GROQ_API_KEY not configured.'}), 500
+    
     data = request.json
     word = data.get('word', '')
     context = data.get('context', '')
